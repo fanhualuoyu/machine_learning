@@ -30,6 +30,13 @@ encorder = LabelEncoder().fit(Y_train)  # 将yes和no替换成1和0
 Y_train = pd.DataFrame(encorder.transform(Y_train))
 Y_test = pd.DataFrame(encorder.transform(Y_test))
 
+X_train.drop(index=71737)
+Y_train.drop(index=71737)
+X_test = X_test.drop(index=[19646, 29632])
+Y_test = Y_test.drop(index=[19646, 29632])
+for i in [X_train, X_test, Y_train, Y_test]:
+    i.index = range(i.shape[0])
+
 # 处理困难特征:日期
 # 将日期转换为"今天是否会下雨"这个特征
 X_train.loc[X_train['Rainfall'] >= 1, 'RainToday'] = 'Yes'
@@ -92,30 +99,35 @@ X_test = X_test.rename(columns={"Location": "Climate"})
 cate = X_train.columns[X_train.dtypes == 'object'].tolist()
 cloud = ['Cloud9am', 'Cloud3pm']  # 虽然用数字表示，但是本质上还是为分类型特征的云层遮蔽程度
 cate = cate + cloud
+
 # 利用训练集中的众数对训练集和测试集进行填充
 si = SimpleImputer(missing_values=np.nan, strategy='most_frequent')
 si.fit(X_train.loc[:, cate])
 X_train.loc[:, cate] = si.transform(X_train.loc[:, cate])
 X_test.loc[:, cate] = si.transform(X_test.loc[:, cate])
+
 # 将分类型变量进行编码
 oe = OrdinalEncoder()
 oe.fit(X_train.loc[:, cate])
 X_train.loc[:, cate] = oe.transform(X_train.loc[:, cate])
 X_test.loc[:, cate] = oe.transform(X_test.loc[:, cate])
+
 # 处理连续型变量
 col = X_train.columns.tolist()
 for i in cate:
     col.remove(i)
+
 # 利用均值来填充连续型变量的缺失值
 impmean = SimpleImputer(missing_values=np.nan, strategy='mean')
 impmean = impmean.fit(X_train.loc[:, col])
 X_train.loc[:, col] = impmean.transform(X_train.loc[:, col])
 X_test.loc[:, col] = impmean.transform(X_test.loc[:, col])
+
 # 对连续型变量要进行归一化(SVM处理时要进行无量纲化)
 ss = StandardScaler()
 ss = ss.fit(X_train.loc[:, col])
-X_train.loc[:, col] = ss.transform(X_train[:, col])
-X_train.loc[:, col] = ss.transform(X_test[:, col])
+X_train.loc[:, col] = ss.transform(X_train.loc[:, col])
+X_test.loc[:, col] = ss.transform(X_test.loc[:, col])
 
 # 建立模型和模型评估
 Y_train = Y_train.iloc[:, 0].ravel()
@@ -131,7 +143,7 @@ for kernel in ["linear", "poly", "rbf", "sigmoid"]:
     auc = roc_auc_score(Y_test, clf.decision_function(X_test))
     print("%s 's testing accuracy %f, recall is %f', auc is %f" % (kernel, score, recall, auc))
 print('-' * 20)
-
+'''
 # 最求更高的recall
 for kernel in ["linear", "poly", "rbf", "sigmoid"]:  # 求出最好的核函数
     clf = SVC(kernel=kernel
@@ -237,3 +249,5 @@ prob.loc[prob.iloc[:, 0] < thresholds[maxindex], "y_pred"] = 0
 score = AC(Y_test, prob.loc[:, "y_pred"].values)
 recall = recall_score(Y_test, prob.loc[:, "y_pred"])
 print("testing accuracy %f,recall is %f" % (score, recall))
+
+'''
