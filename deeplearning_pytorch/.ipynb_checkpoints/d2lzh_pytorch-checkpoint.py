@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from IPython import display
 from matplotlib import pyplot as plt
 import numpy as np
@@ -62,7 +63,16 @@ def load_data_fashion_mnist(batch_size): # 加载数据集
 def evalute_accuracy(data_iter, net): # 计算准确率
     acc_sum, n = 0.0, 0
     for X, y in data_iter:
-        acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+        if isinstance(net, torch.nn.Module):
+            net.eval() # 评估模式
+            acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
+            net.train() # 改回训练模式
+        else:
+            if('is_training' in net.__code__.co_varnames):
+                # 将is_training设置成False
+                acc_sum += (net(X, is_training=False).argmax(dim=1) == y).float().sum()
+            else:
+                acc_sum += (net(X).argmax(dim=1) == y).float().sum().item()
         n += y.shape[0]
     return acc_sum / n
 
@@ -87,3 +97,19 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, batch_size, params=N
             n += y.shape[0]
         test_acc = evalute_accuracy(test_iter, net)
         print('epoch %d, loss %.4f, train acc %.3f, test acc %.3f' % (epoch + 1, train_l_sum / n, train_acc_sum / n, test_acc))
+
+class FlattenLayer(nn.Module): # 将x的形状进行转变
+    def __init__(self):
+        super(FlattenLayer, self).__init__()
+    def forward(self, x): # x shape: (batch, *, *, ...)
+        return x.view(x.shape[0], -1)
+
+def semilogy(x_vals, y_vals, x_label, y_label, x2_vals=None, y2_vals=None, legend=None, figsize=(3.5, 2.5)): # 画图函数
+    set_figsize(figsize)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    # y轴使用对数尺度
+    plt.semilogy(x_vals, y_vals)
+    if x2_vals and y2_vals:
+        plt.semilogy(x2_vals, y2_vals)
+        plt.legend(legend)
