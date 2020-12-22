@@ -1,0 +1,10 @@
+import re
+print(re.search(r"python","I love python.com"))
+print(re.search(r"\.","I love python.com"))
+print(re.search(r"\d\d\d","I love 123 python.com"))
+print(re.search(r"[aeiou]","I love 123 python.com"))
+print(re.search(r"[a-z]","I love 123 python.com"))
+print(re.search(r"[0-9]","I love 123 python.com"))
+print(re.search(r"ab{3,10}c","abbbbbbc"))
+print(re.search(r"[01]\d\d|2[0-4]\d|25[0-5]","188"))
+print(re.search(r"(([01]{0,1}\d{0,1}\d{0,1}|2[0-4]\d|25[0-5])\.){3}(2[0-4]\d|25[0-5]|[01]{0,1}\d{0,1}\d{0,1})","192.168.0.252"))
